@@ -31,12 +31,10 @@ impl<'a> Paragraph<'a> {
 
 named!(pub parse_paragraph<Paragraph>,
     map!(
-        many1!(alt!(parse_bold | parse_italics | parse_plain)),
+        complete!(many1!(alt!(parse_bold | parse_italics | parse_plain))),
         Paragraph::new
     )
 );
-
-named!(parse_only_paragraph<Paragraph>, complete!(parse_paragraph));
 
 named!(parse_plain<Text>,
     map!(
@@ -49,7 +47,7 @@ named!(parse_bold<Text>,
     map_res!(
         delimited!(char!('*'), is_not!("*"), char!('*')),
         |bytes| {
-            match parse_only_paragraph(bytes) {
+            match parse_paragraph(bytes) {
                 IResult::Done(_, output) => Ok(Text::Bold(output)),
                 IResult::Error(err) => Err(err),
                 _ => panic!("Nom complete! macro returned an IResult::Incomplete")
@@ -62,7 +60,7 @@ named!(parse_italics<Text>,
     map_res!(
         delimited!(char!('_'), is_not!("_"), char!('_')),
         |bytes| {
-            match parse_only_paragraph(bytes) {
+            match parse_paragraph(bytes) {
                 IResult::Done(_, output) => Ok(Text::Italics(output)),
                 IResult::Error(err) => Err(err),
                 _ => panic!("Nom complete! macro returned an IResult::Incomplete")
